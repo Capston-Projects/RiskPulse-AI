@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { formatInr } from '../utils/inr';
+import { calculateScenarioOutcome, type ScenarioInputs } from '../utils/scenario';
 import { fetchPolicyWorkspace, type PolicyDetailWorkspaceData } from '../services/policyDetailApi';
 
 const riskToneClasses: Record<string, string> = {
@@ -144,29 +145,104 @@ function DecisionCard({ decision }: { decision: PolicyDetailWorkspaceData['decis
 }
 
 function AiBriefCard({ brief }: { brief: PolicyDetailWorkspaceData['aiBrief'] }) {
+  const premiumDelta = brief.premiumSummary.premiumChangeAmount;
+  const premiumDeltaText = `${premiumDelta >= 0 ? '+' : '-'}${formatInr(Math.abs(premiumDelta))}`;
+
+  const executiveAssessment = [
+    `${brief.customerSummary.policyholderName} is currently assessed as ${brief.riskAssessment.riskLevel.toLowerCase()} risk`,
+    `with a score of ${brief.riskAssessment.score} and a ${brief.customerSummary.coverageType.toLowerCase()} policy for ${brief.customerSummary.vehicle}.`,
+    `The strongest underwriting signals are ${brief.riskAssessment.topRiskDrivers.slice(0, 3).join(', ')}.`,
+  ].join(' ');
+
   return (
     <div className="rounded-[28px] border border-slate-800 bg-slate-900/80 p-5 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.8)] sm:p-6">
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-5 flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">AI Underwriter Brief</p>
-          <h3 className="mt-2 text-xl font-semibold text-white">Decision support summary</h3>
+          <h3 className="mt-2 text-xl font-semibold text-white">Executive assessment</h3>
         </div>
         <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-xs font-medium text-cyan-200">Human-reviewed</span>
       </div>
 
-      <div className="space-y-4 text-sm text-slate-200">
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Customer summary</div>
-          <p className="mt-2 leading-6 text-slate-200">{brief.customerSummary.policyholderName} ({brief.customerSummary.customerId}) — {brief.customerSummary.coverageType} cover for {brief.customerSummary.vehicle}.</p>
+      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Concise assessment</div>
+            <p className="mt-2 leading-6 text-slate-200">{executiveAssessment}</p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Why the policy was flagged</div>
+            <p className="mt-2 leading-6 text-slate-200">{brief.underwritingDecision.reason}</p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Top supporting risk evidence</div>
+            <ul className="mt-3 space-y-2 text-sm text-slate-200">
+              {brief.riskAssessment.topRiskDrivers.map((driver) => (
+                <li key={driver} className="flex items-start gap-2">
+                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                  <span>{driver}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Key underwriting insight</div>
-          <p className="mt-2 leading-6 text-slate-200">{brief.underwritingDecision.reason}</p>
+
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Premium context</div>
+            <div className="mt-3 space-y-3 text-sm text-slate-200">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-400">Current premium</span>
+                <span className="font-semibold text-white">{formatInr(brief.premiumSummary.currentPremium)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-400">Recommended premium</span>
+                <span className="font-semibold text-white">{formatInr(brief.premiumSummary.recommendedPremium)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-400">Delta</span>
+                <span className="font-semibold text-cyan-200">{premiumDeltaText}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-400">Change %</span>
+                <span className="font-semibold text-cyan-200">{brief.premiumSummary.premiumChangePercent.toFixed(1)}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Rating leakage concern</div>
+            <div className="mt-3 space-y-2 text-sm text-slate-200">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-400">Severity</span>
+                <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-200">{brief.leakageAssessment.severity}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-400">Estimated leakage</span>
+                <span className="font-semibold text-white">{formatInr(brief.leakageAssessment.estimatedLeakageAmount)}</span>
+              </div>
+              <p className="leading-6 text-slate-300">{brief.leakageAssessment.explanation}</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Underwriting recommendation</div>
+            <div className="mt-3 text-base font-semibold text-cyan-200">{brief.underwritingDecision.decision}</div>
+            <p className="mt-2 text-sm leading-6 text-slate-300">{brief.underwritingDecision.recommendedAction}</p>
+          </div>
         </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Recommended action</div>
-          <p className="mt-2 leading-6 text-cyan-200">{brief.humanReviewAction}</p>
-        </div>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+        <div className="text-[10px] uppercase tracking-[0.22em] text-cyan-200">Recommended human action</div>
+        <p className="mt-2 text-sm leading-6 text-slate-100">{brief.humanReviewAction}</p>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+        <div className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Disclaimer</div>
+        <p className="mt-2 text-sm leading-6 text-slate-200">AI-assisted decision support — final decision remains with human underwriter.</p>
       </div>
     </div>
   );
@@ -177,10 +253,77 @@ type PolicyDetailWorkspaceProps = {
   onBack: () => void;
 };
 
+function deriveDrivingBehaviourRisk(harshBraking: number, phoneDistraction: number): number {
+  const weightedRisk = (harshBraking / 10) * 45 + (phoneDistraction / 80) * 55;
+  return Math.min(100, Math.max(0, Math.round(weightedRisk)));
+}
+
+function ScenarioComparisonCard({
+  currentRiskScore,
+  scenarioRiskScore,
+  currentRiskLevel,
+  scenarioRiskLevel,
+  currentPremium,
+  scenarioPremium,
+  currentLeakage,
+  scenarioLeakage,
+  currentDecision,
+  scenarioDecision,
+}: {
+  currentRiskScore: number;
+  scenarioRiskScore: number;
+  currentRiskLevel: string;
+  scenarioRiskLevel: string;
+  currentPremium: number;
+  scenarioPremium: number;
+  currentLeakage: number;
+  scenarioLeakage: number;
+  currentDecision: string;
+  scenarioDecision: string;
+}) {
+  const rows = [
+    { label: 'Risk score', current: `${currentRiskScore}`, scenario: `${scenarioRiskScore}` },
+    { label: 'Risk level', current: currentRiskLevel, scenario: scenarioRiskLevel },
+    { label: 'Recommended premium', current: formatInr(currentPremium), scenario: formatInr(scenarioPremium) },
+    { label: 'Leakage', current: formatInr(currentLeakage), scenario: formatInr(scenarioLeakage) },
+    { label: 'Underwriting decision', current: currentDecision, scenario: scenarioDecision },
+  ];
+
+  return (
+    <div className="rounded-[28px] border border-slate-800 bg-slate-900/80 p-5 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.8)] sm:p-6">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">What-if simulation</p>
+          <h3 className="mt-2 text-xl font-semibold text-white">Risk & pricing impact</h3>
+        </div>
+        <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-xs font-medium text-cyan-200">Simulation</span>
+      </div>
+
+      <div className="space-y-3">
+        {rows.map((row) => (
+          <div key={row.label} className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 p-3.5 md:grid-cols-2">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{row.label}</div>
+              <div className="mt-2 text-sm font-semibold text-slate-200">Current</div>
+              <div className="mt-1 text-base font-medium text-white">{row.current}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Scenario</div>
+              <div className="mt-2 text-sm font-semibold text-cyan-200">Adjusted</div>
+              <div className="mt-1 text-base font-medium text-cyan-100">{row.scenario}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function PolicyDetailWorkspace({ policyId, onBack }: PolicyDetailWorkspaceProps) {
   const [data, setData] = useState<PolicyDetailWorkspaceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [scenarioInputs, setScenarioInputs] = useState<ScenarioInputs | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -210,6 +353,50 @@ export function PolicyDetailWorkspace({ policyId, onBack }: PolicyDetailWorkspac
     };
   }, [policyId]);
 
+  useEffect(() => {
+    if (!data) return;
+
+    setScenarioInputs({
+      annualMileage: data.policy.policy.annualMileage,
+      claimCount: data.policy.claimsHistory.claimsInLast3Years,
+      drivingBehaviourRisk: deriveDrivingBehaviourRisk(
+        data.policy.telematics.harshBrakingEventsPer1000Km,
+        data.policy.telematics.phoneDistractionScore,
+      ),
+    });
+  }, [data]);
+
+  const { policy, riskProfile, pricing, leakage, decision, aiBrief } = data ?? {
+    policy: undefined,
+    riskProfile: undefined,
+    pricing: undefined,
+    leakage: undefined,
+    decision: undefined,
+    aiBrief: undefined,
+  } as Partial<PolicyDetailWorkspaceData> as PolicyDetailWorkspaceData;
+
+  const scenarioOutcome = useMemo(() => {
+    if (!data || !scenarioInputs) {
+      return null;
+    }
+
+    return calculateScenarioOutcome(data.policy, scenarioInputs);
+  }, [data, scenarioInputs]);
+
+  const updateScenarioInput = <K extends keyof ScenarioInputs>(key: K, value: ScenarioInputs[K]) => {
+    if (!data) return;
+
+    setScenarioInputs((current) => ({
+      annualMileage: current?.annualMileage ?? data.policy.policy.annualMileage,
+      claimCount: current?.claimCount ?? data.policy.claimsHistory.claimsInLast3Years,
+      drivingBehaviourRisk: current?.drivingBehaviourRisk ?? deriveDrivingBehaviourRisk(
+        data.policy.telematics.harshBrakingEventsPer1000Km,
+        data.policy.telematics.phoneDistractionScore,
+      ),
+      [key]: value,
+    }));
+  };
+
   if (loading) {
     return (
       <div className="rounded-[28px] border border-slate-800 bg-slate-900/80 p-8 text-slate-200 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.8)]">
@@ -226,8 +413,6 @@ export function PolicyDetailWorkspace({ policyId, onBack }: PolicyDetailWorkspac
       </div>
     );
   }
-
-  const { policy, riskProfile, pricing, leakage, decision, aiBrief } = data;
 
   return (
     <div className="space-y-6">
@@ -337,6 +522,86 @@ export function PolicyDetailWorkspace({ policyId, onBack }: PolicyDetailWorkspac
       </section>
 
       <AiBriefCard brief={aiBrief} />
+
+      <div className="rounded-[28px] border border-slate-800 bg-slate-900/80 p-5 shadow-[0_18px_45px_-20px_rgba(15,23,42,0.8)] sm:p-6">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Simulation controls</p>
+            <h3 className="mt-2 text-xl font-semibold text-white">What-if risk & pricing simulator</h3>
+          </div>
+          <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-200">Editable</span>
+        </div>
+
+        {scenarioInputs && scenarioOutcome && (
+          <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+            <div className="space-y-5">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <label htmlFor="mileage" className="text-sm font-medium text-slate-200">Annual mileage</label>
+                  <span className="text-sm font-semibold text-cyan-200">{scenarioInputs.annualMileage.toLocaleString()} km</span>
+                </div>
+                <input
+                  id="mileage"
+                  type="range"
+                  min={2000}
+                  max={30000}
+                  step={250}
+                  value={scenarioInputs.annualMileage}
+                  onChange={(event) => updateScenarioInput('annualMileage', Number(event.target.value))}
+                  className="w-full accent-cyan-400"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <label htmlFor="claims" className="text-sm font-medium text-slate-200">Claim count</label>
+                  <span className="text-sm font-semibold text-cyan-200">{scenarioInputs.claimCount}</span>
+                </div>
+                <input
+                  id="claims"
+                  type="range"
+                  min={0}
+                  max={5}
+                  step={1}
+                  value={scenarioInputs.claimCount}
+                  onChange={(event) => updateScenarioInput('claimCount', Number(event.target.value))}
+                  className="w-full accent-cyan-400"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <label htmlFor="driving-risk" className="text-sm font-medium text-slate-200">Driving behaviour risk</label>
+                  <span className="text-sm font-semibold text-cyan-200">{scenarioInputs.drivingBehaviourRisk}/100</span>
+                </div>
+                <input
+                  id="driving-risk"
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={scenarioInputs.drivingBehaviourRisk}
+                  onChange={(event) => updateScenarioInput('drivingBehaviourRisk', Number(event.target.value))}
+                  className="w-full accent-cyan-400"
+                />
+              </div>
+            </div>
+
+            <ScenarioComparisonCard
+              currentRiskScore={riskProfile.score}
+              scenarioRiskScore={scenarioOutcome.riskScore}
+              currentRiskLevel={riskProfile.riskLevel}
+              scenarioRiskLevel={scenarioOutcome.riskLevel}
+              currentPremium={policy.premium.currentPremiumAnnual}
+              scenarioPremium={scenarioOutcome.recommendedPremium}
+              currentLeakage={leakage.estimatedLeakageAmount}
+              scenarioLeakage={scenarioOutcome.leakageAmount}
+              currentDecision={decision.decision}
+              scenarioDecision={scenarioOutcome.decision}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

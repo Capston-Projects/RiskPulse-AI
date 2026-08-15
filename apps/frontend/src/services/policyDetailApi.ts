@@ -1,47 +1,8 @@
+import type { SyntheticPolicyRecord } from '@riskpulse/shared';
+
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
-export type PolicyDetailRecord = {
-  customer: {
-    customerId: string;
-    policyholderName: string;
-    age: number;
-    postcode: string;
-    yearsAsPolicyholder: number;
-    employmentStatus: string;
-    maritalStatus: string;
-  };
-  policy: {
-    policyId: string;
-    policyStatus: string;
-    coverageType: string;
-    vehicleUse: string;
-    annualMileage: number;
-    priorInsuranceYears: number;
-    renewalCount: number;
-    effectiveDate: string;
-    expiryDate: string;
-  };
-  vehicle: {
-    make: string;
-    model: string;
-    year: number;
-    fuelType: string;
-    transmission: string;
-    engineSizeCc: number;
-    vehicleValue: number;
-    garagingPostcode: string;
-  };
-  premium: {
-    currentPremiumAnnual: number;
-    basePremiumAnnual: number;
-    discountsApplied: number;
-    excessAmount: number;
-    paymentFrequency: string;
-    renewalNoticeDays: number;
-  };
-  riskBand: string;
-  notes?: string;
-};
+export type PolicyDetailRecord = SyntheticPolicyRecord;
 
 export type RiskProfile = {
   score: number;

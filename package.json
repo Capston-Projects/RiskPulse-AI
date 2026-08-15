@@ -10,7 +10,7 @@
     "dev:frontend": "npm run dev --workspace @riskpulse/frontend",
     "dev:backend": "npm run dev --workspace @riskpulse/backend",
     "build": "npm run build --workspace @riskpulse/shared && npm run build --workspace @riskpulse/frontend && npm run build --workspace @riskpulse/backend",
-    "test": "npm run test --workspace @riskpulse/frontend && npm run test --workspace @riskpulse/backend",
+    "test": "npm run test --workspace @riskpulse/shared && npm run test --workspace @riskpulse/frontend && npm run test --workspace @riskpulse/backend",
     "check": "npm run build && npm run test"
   }
 }

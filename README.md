@@ -50,12 +50,34 @@ Data flow:
 
 Policy data -> shared risk/pricing/leakage/decision algorithms -> backend API -> frontend dashboard/detail views -> human underwriter review
 
+For the repository-accurate architecture breakdown and policy-to-decision flow, see [docs/architecture.md](docs/architecture.md).
+
 ## Technology stack
 
 - Frontend: React, TypeScript, Vite, Tailwind CSS
 - Backend: Node.js, Express, TypeScript
 - Shared logic: TypeScript package for underwriting and pricing models
 - Tooling: npm workspaces, Vitest, TypeScript compiler
+
+## Backend
+
+The backend is implemented as a typed Express API layer over deterministic shared underwriting services. See [docs/backend.md](docs/backend.md) for the actual endpoint contract, request/response behavior, validation, and testing coverage.
+
+## Frontend Dashboard
+
+The actual frontend architecture, dashboard sections, live backend integration points, simulator behavior, and testing status are documented in [docs/frontend-dashboard.md](docs/frontend-dashboard.md).
+
+## AI Underwriter
+
+The AI Underwriter layer is documented in [docs/ai-underwriter.md](docs/ai-underwriter.md). It explains the provider-agnostic decision-support architecture, the deterministic inputs it consumes, and the human-in-the-loop guardrails used by the project.
+
+## Testing & Quality
+
+The repository’s testing and quality strategy is documented in [docs/testing-quality.md](docs/testing-quality.md). It covers deterministic domain validation, backend API checks, frontend scenario verification, and the final build validation process.
+
+## Risk & Pricing Engine
+
+The actual underwriting logic is implemented in the shared package and is documented in [docs/risk-pricing-engine.md](docs/risk-pricing-engine.md). It covers the deterministic flow from synthetic policy inputs to risk score, pricing recommendation, leakage detection, and underwriter decision support.
 
 ## Explainable and human-in-the-loop approach
 
@@ -158,17 +180,11 @@ Missing or invalid policy IDs return structured 404 or validation responses.
 5. Use the What-If Simulator to adjust mileage, claim count, and driving behaviour risk to evaluate scenario impact on score, premium, and decision.
 6. Use the back navigation to return to the dashboard and compare policy-level decision support in context.
 
-## GitHub Copilot usage in development
+## GitHub Copilot Development
 
-GitHub Copilot was used as a supporting development tool throughout the project lifecycle to help with:
+GitHub Copilot was used as a supporting development tool throughout the project lifecycle to help with repo setup, deterministic underwriting logic, API contracts, tests, UI refinement, and documentation. The repository-level guidance in [.github/copilot-instructions.md](.github/copilot-instructions.md) kept work aligned with the project’s domain, synthetic-data constraints, testing expectations, and frontend design system.
 
-- monorepo setup and project scaffolding
-- implementation planning for the frontend, backend, and shared packages
-- generation of deterministic underwriting logic and API contracts
-- test creation and validation steps
-- documentation refinement and UI polish guidance
-
-The implementation remains grounded in repository code, typed contracts, and explicit validation rather than unsupported assumptions.
+For the repository-accurate development workflow and review notes, see [docs/copilot-development.md](docs/copilot-development.md).
 
 ## Limitations and future enhancements
 

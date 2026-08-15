@@ -17,6 +17,7 @@ import type {
   LeakageResponse,
   UnderwritingDecisionResponse,
   AIUnderwriterBriefResponse,
+  DashboardSummaryResponse,
 } from './contracts.js';
 
 const app = express();
@@ -44,6 +45,151 @@ const asyncHandler = (
 ) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     void Promise.resolve(handler(req, res, next)).catch(next);
+  };
+};
+
+const formatInr = (value: number): string =>
+  new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+
+const formatDelta = (value: number): string => `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+
+const buildDashboardSummary = (): DashboardSummaryResponse => {
+  const analyses = syntheticPolicyRecords.map((record) => {
+    const riskProfile = calculateRiskProfile(record);
+    const pricing = calculateRecommendedPremium(record.premium.currentPremiumAnnual, riskProfile);
+    const leakage = detectRatingLeakage(record.premium.currentPremiumAnnual, riskProfile);
+    const decision = determineUnderwritingDecision(record.premium.currentPremiumAnnual, riskProfile);
+
+    return { record, riskProfile, pricing, leakage, decision };
+  });
+
+  const totalPremium = analyses.reduce((sum, item) => sum + item.record.premium.currentPremiumAnnual, 0);
+  const totalLeakage = analyses.reduce((sum, item) => sum + item.leakage.estimatedLeakageAmount, 0);
+  const highRiskPolicies = analyses.filter((item) => item.riskProfile.riskLevel === 'HIGH' || item.riskProfile.riskLevel === 'CRITICAL').length;
+  const reviewPolicies = analyses.filter((item) => item.decision.decision === 'REVIEW' || item.decision.decision === 'REFER').length;
+  const premiumGap = analyses.reduce(
+    (sum, item) => sum + (item.pricing.recommendedPremium - item.record.premium.currentPremiumAnnual),
+    0,
+  );
+  const premiumGapPercent = totalPremium === 0 ? 0 : (premiumGap / totalPremium) * 100;
+  const leakageGapPercent = totalPremium === 0 ? 0 : (totalLeakage / totalPremium) * 100;
+
+  const riskCounts = {
+    Low: analyses.filter((item) => item.riskProfile.riskLevel === 'LOW').length,
+    Medium: analyses.filter((item) => item.riskProfile.riskLevel === 'MEDIUM').length,
+    High: analyses.filter((item) => item.riskProfile.riskLevel === 'HIGH').length,
+    Critical: analyses.filter((item) => item.riskProfile.riskLevel === 'CRITICAL').length,
+  } as const;
+
+  const totalPolicies = analyses.length || 1;
+  const riskDistribution = [
+    { label: 'Low', value: Number(((riskCounts.Low / totalPolicies) * 100).toFixed(1)), color: 'bg-emerald-400' },
+    { label: 'Medium', value: Number(((riskCounts.Medium / totalPolicies) * 100).toFixed(1)), color: 'bg-amber-400' },
+    { label: 'High', value: Number(((riskCounts.High / totalPolicies) * 100).toFixed(1)), color: 'bg-orange-400' },
+    { label: 'Critical', value: Number(((riskCounts.Critical / totalPolicies) * 100).toFixed(1)), color: 'bg-rose-500' },
+  ] as const;
+
+  const reviewQueue = analyses
+    .filter((item) => item.decision.decision !== 'APPROVE')
+    .sort((a, b) => {
+      const severityOrder = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1, NONE: 0 };
+      return (
+        severityOrder[b.leakage.severity as keyof typeof severityOrder] -
+          severityOrder[a.leakage.severity as keyof typeof severityOrder]
+      );
+    })
+    .slice(0, 4)
+    .map((item) => ({
+      policyId: item.record.policy.policyId,
+      customer: item.record.customer.policyholderName,
+      risk: item.riskProfile.riskLevel,
+      premium: formatInr(item.record.premium.currentPremiumAnnual),
+      leakage: `${item.leakage.leakagePercentage.toFixed(1)}%`,
+      action:
+        item.decision.decision === 'REFER'
+          ? 'Escalate underwriter'
+          : item.decision.decision === 'REVIEW'
+            ? 'Manual review'
+            : 'Pricing audit',
+    }));
+
+  const leakageSummary = [
+    {
+      band: 'Critical',
+      count: analyses.filter((item) => item.leakage.severity === 'CRITICAL').length,
+      value: formatInr(
+        analyses
+          .filter((item) => item.leakage.severity === 'CRITICAL')
+          .reduce((sum, item) => sum + item.leakage.estimatedLeakageAmount, 0),
+      ),
+      tone: 'critical' as const,
+    },
+    {
+      band: 'High',
+      count: analyses.filter((item) => item.leakage.severity === 'HIGH').length,
+      value: formatInr(
+        analyses
+          .filter((item) => item.leakage.severity === 'HIGH')
+          .reduce((sum, item) => sum + item.leakage.estimatedLeakageAmount, 0),
+      ),
+      tone: 'warning' as const,
+    },
+    {
+      band: 'Low',
+      count: analyses.filter((item) => ['LOW', 'NONE'].includes(item.leakage.severity)).length,
+      value: formatInr(
+        analyses
+          .filter((item) => ['LOW', 'NONE'].includes(item.leakage.severity))
+          .reduce((sum, item) => sum + item.leakage.estimatedLeakageAmount, 0),
+      ),
+      tone: 'neutral' as const,
+    },
+  ];
+
+  const riskAverage = analyses.reduce((sum, item) => sum + item.riskProfile.score, 0) / analyses.length;
+  const trendData = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((month, index) => ({
+    month,
+    value: Math.max(28, Math.min(92, Math.round(riskAverage + (index - 3) * 5 + (index % 2 === 0 ? 3 : -2)))),
+  }));
+
+  const kpis = [
+    {
+      label: 'Portfolio premium',
+      value: formatInr(totalPremium),
+      delta: formatDelta(premiumGapPercent),
+      tone: 'positive' as const,
+    },
+    {
+      label: 'High risk policies',
+      value: String(highRiskPolicies),
+      delta: formatDelta(((highRiskPolicies / totalPolicies) * 100) - 20),
+      tone: 'warning' as const,
+    },
+    {
+      label: 'Underwriting review',
+      value: String(reviewPolicies),
+      delta: formatDelta(((reviewPolicies / totalPolicies) * 100) - 15),
+      tone: 'neutral' as const,
+    },
+    {
+      label: 'Leakage exposure',
+      value: formatInr(totalLeakage),
+      delta: formatDelta(leakageGapPercent),
+      tone: 'critical' as const,
+    },
+  ];
+
+  return {
+    kpis,
+    riskDistribution: [...riskDistribution],
+    reviewPolicies: reviewQueue,
+    leakageSummary,
+    trendData,
   };
 };
 
@@ -95,6 +241,10 @@ app.get('/api/policies', (_req, res) => {
     .filter((value: PolicySummaryResponse | undefined): value is PolicySummaryResponse => Boolean(value));
 
   res.json(payload);
+});
+
+app.get('/api/dashboard-summary', (_req, res) => {
+  res.json(buildDashboardSummary());
 });
 
 app.get(

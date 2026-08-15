@@ -97,3 +97,45 @@ export interface AIUnderwriterBriefResponse {
   humanReviewAction: string;
   generatedFrom: string[];
 }
+
+export interface DashboardKpiMetricResponse {
+  label: string;
+  value: string;
+  delta: string;
+  tone: 'positive' | 'warning' | 'critical' | 'neutral';
+}
+
+export interface DashboardRiskDistributionResponse {
+  label: 'Low' | 'Medium' | 'High' | 'Critical';
+  value: number;
+  color: string;
+}
+
+export interface DashboardReviewPolicyResponse {
+  policyId: string;
+  customer: string;
+  risk: string;
+  premium: string;
+  leakage: string;
+  action: string;
+}
+
+export interface DashboardLeakageSummaryResponse {
+  band: string;
+  count: number;
+  value: string;
+  tone: 'critical' | 'warning' | 'neutral';
+}
+
+export interface DashboardTrendPointResponse {
+  month: string;
+  value: number;
+}
+
+export interface DashboardSummaryResponse {
+  kpis: DashboardKpiMetricResponse[];
+  riskDistribution: DashboardRiskDistributionResponse[];
+  reviewPolicies: DashboardReviewPolicyResponse[];
+  leakageSummary: DashboardLeakageSummaryResponse[];
+  trendData: DashboardTrendPointResponse[];
+}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { formatInr } from './utils/inr';
 import { Layout } from './components/Layout';
 import { StatCard } from './components/StatCard';
@@ -7,13 +7,41 @@ import { ReviewTable } from './components/ReviewTable';
 import { LeakageSummary } from './components/LeakageSummary';
 import { TrendChart } from './components/TrendChart';
 import { PolicyDetailWorkspace } from './components/PolicyDetailWorkspace';
-import { kpis, riskDistribution, reviewPolicies, leakageSummary, trendData } from './data/mockDashboard';
+import type { DashboardSummaryResponse } from './services/dashboardApi';
+import { fetchDashboardSummary } from './services/dashboardApi';
 
 function App() {
   const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardSummaryResponse | null>(null);
 
-  const dashboard = useMemo(
-    () => (
+  useEffect(() => {
+    let isMounted = true;
+
+    fetchDashboardSummary()
+      .then((summary) => {
+        if (isMounted) {
+          setDashboardData(summary);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setDashboardData(null);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const dashboard = useMemo(() => {
+    const kpis = dashboardData?.kpis ?? [];
+    const riskDistribution = dashboardData?.riskDistribution ?? [];
+    const reviewPolicies = dashboardData?.reviewPolicies ?? [];
+    const leakageSummary = dashboardData?.leakageSummary ?? [];
+    const trendData = dashboardData?.trendData ?? [];
+
+    return (
       <>
         <section id="overview" className="mb-8 flex flex-col gap-3">
           <div className="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.28em] text-cyan-200">
@@ -94,9 +122,20 @@ function App() {
           </div>
         </section>
       </>
-    ),
-    [selectedPolicyId],
-  );
+    );
+  }, [dashboardData, selectedPolicyId]);
+
+  if (!dashboardData) {
+    return (
+      <Layout>
+        <section className="flex min-h-[40vh] items-center justify-center">
+          <div className="rounded-[28px] border border-slate-800 bg-slate-900/80 px-6 py-4 text-sm text-slate-200">
+            Loading portfolio dashboard...
+          </div>
+        </section>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>

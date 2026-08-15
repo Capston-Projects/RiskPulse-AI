@@ -69,4 +69,17 @@ describe('RiskPulse backend API', () => {
     expect(response.status).toBe(404);
     expect(response.body.error.code).toBe('NOT_FOUND');
   });
+
+  it('returns a synthetic portfolio dashboard summary', async () => {
+    const response = await request(app).get('/api/dashboard-summary');
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body.kpis)).toBe(true);
+    expect(response.body.kpis).toHaveLength(4);
+    expect(Array.isArray(response.body.riskDistribution)).toBe(true);
+    expect(Array.isArray(response.body.reviewPolicies)).toBe(true);
+    expect(Array.isArray(response.body.leakageSummary)).toBe(true);
+    expect(response.body.reviewPolicies.length).toBeGreaterThan(0);
+    expect(response.body.kpis[0].value).toContain('₹');
+  });
 });

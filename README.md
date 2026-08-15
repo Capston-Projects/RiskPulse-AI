@@ -186,6 +186,10 @@ GitHub Copilot was used as a supporting development tool throughout the project 
 
 For the repository-accurate development workflow and review notes, see [docs/copilot-development.md](docs/copilot-development.md).
 
+## Copilot Prompt Log
+
+The prompt log records the staged Copilot prompts, outcomes, and validation across all 12 Capstone stages. See [docs/copilot-prompts.md](docs/copilot-prompts.md) for the repository-accurate trail from problem definition through final submission.
+
 ## Limitations and future enhancements
 
 Current limitations:

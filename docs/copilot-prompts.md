@@ -1,290 +1,323 @@
-# RiskPulse AI Copilot Prompts by Development Stage
+# RiskPulse AI Copilot Prompt Log
 
-This document records the Copilot-assisted work used across the twelve stages of the RiskPulse AI capstone. It is based on the repository’s actual implementation, README, development notes, and documentation, and it reflects the project’s real incremental workflow. Where the exact historical prompt wording is not preserved in the repo, the prompt is labeled as “reconstructed from the documented development task.”
+This document is a reusable stage-by-stage playbook for developing and validating the RiskPulse AI Capstone with GitHub Copilot. It is based on the repository’s actual implementation, README, developer notes, and supporting documentation. It does not claim that the prompts below are verbatim historical messages unless the repository already preserved them; when exact wording is unavailable, the prompt is labeled as “reconstructed from the documented development task.”
 
-The project was developed incrementally with repository-level instructions, validation, tests, and human review. Copilot was used as an engineering assistant to accelerate scaffold work, domain logic, API contracts, UI implementation, and documentation, while the project’s constraints were enforced by the repo guidance in [.github/copilot-instructions.md](.github/copilot-instructions.md) and the workflow notes in [docs/copilot-development.md](docs/copilot-development.md).
+## How to use this prompt log
+
+- Start with Stage 1 and complete each stage before moving to the next.
+- Use the same repository and branch throughout the work so each stage builds on the actual outputs created before it.
+- Before accepting Copilot output, review the changed files against the repository instructions in [.github/copilot-instructions.md](.github/copilot-instructions.md) and the project notes in [docs/copilot-development.md](docs/copilot-development.md).
+- Run the stated validation after each stage and do not move past a stage until the repository still passes its required build/test checks.
+- Keep the project aligned to the synthetic-data-only requirement, the human-in-the-loop underwriting model, and the deterministic Risk → Pricing → Leakage → Decision pipeline.
 
 ---
 
 ## Stage 1 — Business Problem Definition
 
-### Goal
-Define the underwriting and pricing problem, clarify the human-in-the-loop constraint, and frame the project as explainable decision support rather than autonomous underwriting.
+### 1. Goal
+Define the underwriting and pricing challenge, establish the human-in-the-loop framing, and keep the project grounded in explainable insurance decision support rather than autonomous underwriting.
 
-### Copilot prompt
-Reconstructed from the documented development task: “Create the initial RiskPulse AI project scope around insurance underwriting, pricing pressure, rating leakage, and explainable human review.”
+### 2. Prerequisites
+- Review the project overview in [README.md](README.md).
+- Read the repository-level guidance in [.github/copilot-instructions.md](.github/copilot-instructions.md).
+- Confirm the project remains synthetic-data-only and focused on underwriting decision support.
 
-### What Copilot was asked to do
-- draft the project problem statement
-- define the business challenge around pricing drift and leakage
-- frame the solution as underwriting decision support
-- keep the project synthetic-data-only and explainable
+### 3. Copilot Prompt
+Reconstructed from the documented development task: “Review the repository and create the initial RiskPulse AI business problem definition around insurance underwriting, rating leakage, risk-based pricing pressure, and explainable human review. Keep the scope synthetic-data-only, human-in-the-loop, and clearly bounded to underwriting decision support. Before making changes, inspect the existing repository and relevant docs; do not invent production metrics, customer data, or AI capabilities. Do not modify unrelated files.”
 
-### Result/output
-The repo’s problem statement and product framing in [README.md](README.md) and the architecture narrative in [docs/architecture.md](docs/architecture.md) were established. The project clearly defines underwriting risk, pricing pressure, leakage, and decision support as the product focus.
+### 4. Expected Outcome
+- A concise problem statement describing the underwriting challenge and the need for explainable review.
+- A clear distinction between the project’s decision-support role and autonomous underwriting.
+- Alignment with the repository’s existing purpose and terminology.
 
-### Validation performed
-- reviewed repository docs and README for consistency with the actual project scope
-- confirmed the problem statement stayed focused on explainability and human review instead of production AI claims
+### 5. Validation
+- Confirm the result matches [README.md](README.md) and the project framing in [docs/architecture.md](docs/architecture.md).
+- Verify the summary still emphasizes human review and synthetic-only data.
+- Run: `npm run build && npm test`
 
 ---
 
 ## Stage 2 — Data & Risk Model
 
-### Goal
-Create the synthetic policy data model and the initial risk model used throughout the project.
+### 1. Goal
+Create the synthetic policy model and the deterministic risk-scoring foundation used throughout the project.
 
-### Copilot prompt
-Reconstructed from the documented development task: “Build the synthetic policy records and risk scoring model for RiskPulse AI, using deterministic factor-based scoring and insurance underwriting logic.”
+### 2. Prerequisites
+- Stage 1 must be complete and accepted.
+- Repository instructions and domain constraints must still be in place.
+- The model should be shared and not duplicated in the frontend or backend.
 
-### What Copilot was asked to do
-- create synthetic insurance policy records
-- define the data structure for customer, policy, claims, telematics, premium, and economic risk inputs
-- implement factor-based risk scoring with explainable contributions
-- keep the data synthetic and bounded to the capstone scope
+### 3. Copilot Prompt
+Reconstructed from the documented development task: “Inspect the existing RiskPulse AI repository and build the synthetic policy records and risk scoring model using the actual project structure. Use synthetic insurance policy data only. Implement deterministic factor-based risk scoring with explainable output for age, mileage, claims, telematics, vehicle profile, economic conditions, and policy history. Keep this logic in the shared domain package, not in the app UI. Before changing files, review the existing repository, docs, and shared package structure. Do not invent new domains, features, or production data. Do not modify unrelated files.”
 
-### Result/output
-The shared domain data and risk model were implemented in [packages/shared/src/syntheticPolicyData.ts](packages/shared/src/syntheticPolicyData.ts) and [packages/shared/src/riskScoring.ts](packages/shared/src/riskScoring.ts). The model calculates a score and classifies it as LOW, MEDIUM, HIGH, or CRITICAL with visible factor breakdowns.
+### 4. Expected Outcome
+- Synthetic policy records created in the shared package.
+- Risk scoring logic calculates a score and a risk band with factor-level explanations.
+- Output remains explainable and human-auditable.
 
-### Validation performed
-- reviewed actual risk-scoring implementation against the documented problem statement
-- confirmed synthetic-only data and explainable factors are still present in the codebase
+### 5. Validation
+- Confirm the logic matches [packages/shared/src/riskScoring.ts](packages/shared/src/riskScoring.ts) and [packages/shared/src/syntheticPolicyData.ts](packages/shared/src/syntheticPolicyData.ts).
+- Check that calculations remain deterministic and synthetic-only.
+- Run: `npm run build && npm test`
 
 ---
 
 ## Stage 3 — Architecture
 
-### Goal
-Set up the monorepo structure and define the frontend, backend, and shared logic boundaries.
+### 1. Goal
+Set up the monorepo architecture and define the separation between frontend, backend, and shared domain services.
 
-### Copilot prompt
-Reconstructed from the documented development task: “Set up the initial RiskPulse AI project structure using the specified stack and create the frontend, backend, and shared project configuration.”
+### 2. Prerequisites
+- Stage 2 must be complete and validated.
+- The repository structure and package boundaries must be consistent with the project’s intended architecture.
 
-### What Copilot was asked to do
-- scaffold the monorepo
-- establish frontend and backend packages
-- define TypeScript and workspace configuration
-- create the architecture boundary between UI, API, and shared logic
+### 3. Copilot Prompt
+Reconstructed from the documented development task: “Inspect the repository and establish the RiskPulse AI monorepo structure using the existing project requirements. Create or align the frontend package, backend package, shared package, and root configuration. Keep the architecture modular: frontend handles dashboard and detail views, backend exposes typed API routes, shared package contains deterministic business logic. Before editing files, inspect the current repo and keep the architecture consistent with the docs. Do not change unrelated logic or add unnecessary dependencies.”
 
-### Result/output
-The repo structure matches the architecture described in [docs/architecture.md](docs/architecture.md): frontend in [apps/frontend](apps/frontend), backend in [apps/backend](apps/backend), and shared domain services in [packages/shared](packages/shared).
+### 4. Expected Outcome
+- A workable monorepo structure consistent with the repo documents.
+- Clear separation between frontend, backend, and deterministic shared logic.
+- Root build and workspace scripts aligned to the actual repository.
 
-### Validation performed
-- confirmed project structure matches the documented architecture
-- checked root package configuration in [package.json](package.json)
+### 5. Validation
+- Confirm the repository structure matches [docs/architecture.md](docs/architecture.md).
+- Review [package.json](package.json) and workspace boundaries.
+- Run: `npm run build && npm test`
 
 ---
 
 ## Stage 4 — GitHub Repository + Copilot Setup
 
-### Goal
-Configure the repository and the Copilot guidance used to keep the project aligned with product expectations, UI design, and constraints.
+### 1. Goal
+Establish the repository-level guidance that keeps Copilot aligned with the project’s domain, constraints, and UI system.
 
-### Copilot prompt
-Reconstructed from the documented development task: “Set up the repository guidance and GitHub Copilot instructions for the RiskPulse AI project, including domain constraints, synthetic data, and UI expectations.”
+### 2. Prerequisites
+- Stages 1–3 must be in place.
+- The repo should already have a clear architecture and product intent.
 
-### What Copilot was asked to do
-- create repository-level guidance for Copilot
-- define the product and engineering constraints
-- keep the work aligned to underwriting, synthetic-only data, and explainability
-- define frontend design expectations and validation guidance
+### 3. Copilot Prompt
+Reconstructed from the documented development task: “Inspect the repository and create GitHub Copilot instructions for RiskPulse AI. Include product intent, synthetic-data-only constraints, human-in-the-loop underwriting, explainability, deterministic design, frontend UI direction, and validation expectations. Keep the instructions repository-aware and ensure they match the actual stack: React + TypeScript + Vite frontend, Node.js + Express + TypeScript backend, and shared deterministic domain logic. Before changing files, read the existing repository guidance and relevant docs. Do not invent production claims, data sources, or external systems.”
 
-### Result/output
-The repository-level instructions are in [.github/copilot-instructions.md](.github/copilot-instructions.md), and the development workflow is documented in [docs/copilot-development.md](docs/copilot-development.md).
+### 4. Expected Outcome
+- A repo-level instruction file consistent with [.github/copilot-instructions.md](.github/copilot-instructions.md).
+- Clear guidance for future Copilot-driven changes and validation.
+- Alignment with the UI design system and human-review requirements.
 
-### Validation performed
-- checked Copilot guidance against the actual codebase and documented constraints
-- confirmed it emphasizes synthetic data, human review, deterministic logic, and UI consistency
+### 5. Validation
+- Check the file against the current product intent and actual implementation.
+- Review the repository guidance in [docs/copilot-development.md](docs/copilot-development.md).
+- Run: `npm run build && npm test`
 
 ---
 
 ## Stage 5 — Backend
 
-### Goal
-Implement the backend API layer that exposes not only data but underwriting outputs for the frontend.
+### 1. Goal
+Implement a typed Express backend that exposes underwriting outputs using the existing shared domain logic.
 
-### Copilot prompt
-Reconstructed from the documented development task: “Build the backend API layer for RiskPulse AI, exposing health, policy, risk, pricing, leakage, underwriting decision, and AI brief endpoints using the shared deterministic services.”
+### 2. Prerequisites
+- Stages 1–4 must be complete.
+- The deterministic risk and synthetic data model must already exist.
+- The backend must rely on shared services rather than duplicating business logic.
 
-### What Copilot was asked to do
-- build Express routes for policy and analysis endpoints
-- reuse shared domain logic instead of duplicating it
-- shape typed responses for the frontend
-- keep API behavior deterministic and testable
+### 3. Copilot Prompt
+Reconstructed from the documented development task: “Inspect the existing RiskPulse AI repository before making changes. Build the backend API layer for the underwriting proof-of-concept using the existing shared services. Expose policy summaries and policy-level analysis endpoints for health, risk profile, pricing recommendation, leakage detection, underwriting decision, and AI Underwriter brief. Keep the backend typed, deterministic, and repository-aware. Reuse the shared package rather than duplicating business logic. Before editing files, read the existing backend and shared package structure and follow the repository instructions. Do not invent unrelated features, external systems, or database logic. Do not modify unrelated files.”
 
-### Result/output
-The backend implementation is in [apps/backend/src/app.ts](apps/backend/src/app.ts), with typed contracts in [apps/backend/src/contracts.ts](apps/backend/src/contracts.ts). The documented API list in [docs/backend.md](docs/backend.md) matches the actual routes and response types.
+### 4. Expected Outcome
+- Working Express routes in [apps/backend/src/app.ts](apps/backend/src/app.ts).
+- Type-safe contracts in [apps/backend/src/contracts.ts](apps/backend/src/contracts.ts).
+- API outputs consistent with the actual risk, pricing, leakage, and decision functions.
 
-### Validation performed
-- reviewed the app route set and response names against the backend docs
-- verified backend API tests in [apps/backend/src/app.test.ts](apps/backend/src/app.test.ts)
+### 5. Validation
+- Confirm endpoint behavior matches [docs/backend.md](docs/backend.md).
+- Review backend tests in [apps/backend/src/app.test.ts](apps/backend/src/app.test.ts).
+- Run: `npm run build && npm test`
 
 ---
 
 ## Stage 6 — Risk/Pricing Engine
 
-### Goal
-Implement the core deterministic engine for risk scoring, adaptive pricing, rating leakage detection, and underwriting decision support.
+### 1. Goal
+Build the deterministic pipeline for Risk → Pricing → Leakage → Decision and keep the outputs explainable and auditable.
 
-### Copilot prompt
-Reconstructed from the documented development task: “Build the Risk Scoring Engine, Adaptive Pricing Engine, Rating Leakage Detection service, and Underwriting Decision Engine for RiskPulse AI.”
+### 2. Prerequisites
+- Stage 5 must be complete and stable.
+- The shared synthetic policy model and risk definitions from Stage 2 must already exist.
+- The backend should already be using the shared business logic for policy analysis.
 
-### What Copilot was asked to do
-- implement risk scoring as additive factor-based logic
-- implement adaptive pricing using current premium and risk profile
-- detect rating leakage and classify severity
-- produce an underwriting decision of APPROVE, REVIEW, or REFER
-- keep the logic deterministic and explainable
+### 3. Copilot Prompt
+Reconstructed from the documented development task: “Inspect the repository and implement the deterministic Risk/Pricing Engine for RiskPulse AI using the existing shared services. Add adaptive pricing logic, rating leakage detection, and underwriting decision logic. Keep the flow explicit: risk score -> recommended premium -> leakage assessment -> underwriting decision. Preserve the synthetic-data-only requirement, human-in-the-loop review, and explainability. Use the repository’s existing terminology: Risk, Pricing, Leakage, Decision, and Underwriting Decision Support. Before editing files, read the current shared package and docs. Do not invent features, external AI providers, or production logic. Do not modify unrelated files.”
 
-### Result/output
-The risk and pricing logic is implemented in [packages/shared/src/riskScoring.ts](packages/shared/src/riskScoring.ts), [packages/shared/src/pricingEngine.ts](packages/shared/src/pricingEngine.ts), [packages/shared/src/ratingLeakage.ts](packages/shared/src/ratingLeakage.ts), and [packages/shared/src/underwritingDecision.ts](packages/shared/src/underwritingDecision.ts). The detailed description in [docs/risk-pricing-engine.md](docs/risk-pricing-engine.md) matches the code.
+### 4. Expected Outcome
+- Deterministic logic for risk, pricing, leakage, and decision in the shared domain package.
+- Output consistent with the documented architecture and decisions in [docs/risk-pricing-engine.md](docs/risk-pricing-engine.md).
+- Later backend and frontend stages can reuse the results without duplication.
 
-### Validation performed
-- checked the formulas and thresholds against the implemented functions
-- ran the shared test suite and confirmed it remained green
+### 5. Validation
+- Confirm the formulas and thresholds match the actual code in the shared package.
+- Run the shared test suite and the root build/test validation.
+- Run: `npm run build && npm test`
 
 ---
 
 ## Stage 7 — Frontend Dashboard
 
-### Goal
-Build the portfolio dashboard and policy detail experience, using the backend API and the repository’s enterprise dashboard design guidance.
+### 1. Goal
+Build the portfolio dashboard and policy detail experience using the repository’s actual backend data and enterprise UI guidance.
 
-### Copilot prompt
-Reconstructed from the documented development task: “Build the initial RiskPulse AI frontend dashboard using the existing React + TypeScript + Vite + Tailwind setup, including portfolio overview, review flow, and policy detail workspace.”
+### 2. Prerequisites
+- Stage 6 must be complete and stable.
+- The backend API from Stage 5 must be available for policy-specific data.
+- The repo should already have layout and styling guidance from [.github/copilot-instructions.md](.github/copilot-instructions.md).
 
-### What Copilot was asked to do
-- create the dashboard layout and KPI cards
-- implement the risk distribution and review queue views
-- render policy detail workspace on selection
-- integrate with backend API data and keep the UI consistent with the design system
+### 3. Copilot Prompt
+Reconstructed from the documented development task: “Inspect the existing RiskPulse AI repository before making changes. Build the frontend dashboard and policy detail workspace using the current React + TypeScript + Vite + Tailwind setup. Reuse the actual backend API contracts and shared domain logic. Include executive portfolio KPIs, risk distribution, review queue, leakage summary, and policy drill-down. Keep the UI enterprise-grade and aligned with the repository design instructions. Before editing files, review current frontend structure and existing components. Do not invent business logic or duplicate pricing rules in the UI. Do not modify unrelated files.”
 
-### Result/output
-The dashboard and policy detail workspace are implemented in [apps/frontend/src/App.tsx](apps/frontend/src/App.tsx) and [apps/frontend/src/components/PolicyDetailWorkspace.tsx](apps/frontend/src/components/PolicyDetailWorkspace.tsx). The actual UI flow is documented in [docs/frontend-dashboard.md](docs/frontend-dashboard.md).
+### 4. Expected Outcome
+- A working dashboard and a policy detail workspace consistent with [docs/frontend-dashboard.md](docs/frontend-dashboard.md).
+- Policy selection opens a detail view that presents risk, premium, leakage, and decision information.
+- The UI remains aligned with the human-in-the-loop underwriting workflow.
 
-### Validation performed
-- checked the implemented UI flow against the dashboard doc
-- confirmed the detail view fetches data from the backend and renders risk, pricing, leakage, and decision sections
+### 5. Validation
+- Verify the dashboard and detail workspace match the repository docs and app screens.
+- Validate the frontend tests and the full build/test run.
+- Run: `npm run build && npm test`
 
 ---
 
 ## Stage 8 — AI Underwriter
 
-### Goal
-Add the AI Underwriter Brief as a decision-support layer that summarizes risk evidence and human review guidance without replacing the deterministic engine.
+### 1. Goal
+Add the AI Underwriter Brief as a decision-support layer that summarizes the deterministic outputs without replacing the underwriting logic or final human authority.
 
-### Copilot prompt
-Reconstructed from the documented development task: “Build the AI Underwriter layer for RiskPulse AI using the existing risk, pricing, leakage, and underwriting decision results.”
+### 2. Prerequisites
+- Stages 5–7 must be complete.
+- The risk profile, pricing, leakage, and underwriting decision outputs must already exist in the shared logic and backend API.
 
-### What Copilot was asked to do
-- create a brief-generation layer over existing outputs
-- summarize the customer, risk, premium, leakage, and decision context
-- keep the final authority with the human underwriter
-- avoid inventing unsupported facts or replacing the deterministic logic
+### 3. Copilot Prompt
+Reconstructed from the documented development task: “Inspect the repository and implement the AI Underwriter layer for RiskPulse AI using the existing risk, pricing, leakage, and underwriting decision outputs. Build a concise decision-support brief that summarizes customer context, risk assessment, premium recommendation, leakage concern, and recommended human action. Keep the human-in-the-loop requirement explicit. Do not create a standalone model, do not invent underwriting facts, and do not claim autonomous decisions. Before making changes, review the existing AI Underwriter docs and backend API contracts. Do not modify unrelated files.”
 
-### Result/output
-The AI layer is implemented in [packages/shared/src/aiUnderwriter.ts](packages/shared/src/aiUnderwriter.ts) and rendered in the UI in [apps/frontend/src/components/PolicyDetailWorkspace.tsx](apps/frontend/src/components/PolicyDetailWorkspace.tsx). The design and constraints are documented in [docs/ai-underwriter.md](docs/ai-underwriter.md).
+### 4. Expected Outcome
+- A structured AI Underwriter Brief generated from real deterministic outputs rather than separate invented logic.
+- UI and backend integration consistent with [docs/ai-underwriter.md](docs/ai-underwriter.md).
+- Final decision remains with the human underwriter.
 
-### Validation performed
-- confirmed the AI brief consumes the deterministic outputs, not an independent model
-- verified the UI disclaimer and human review wording
-- validated the AI brief API route and tests
+### 5. Validation
+- Confirm the AI Underwriter layer consumes upstream outputs from the shared package and backend.
+- Check the UI and API disclaimers remain human-review oriented.
+- Run: `npm run build && npm test`
 
 ---
 
 ## Stage 9 — Testing & Quality
 
-### Goal
-Validate the implementation with project-appropriate test coverage and keep quality checks aligned to the actual repository requirements.
+### 1. Goal
+Establish the repository’s actual quality gate with deterministic tests, backend API checks, and frontend simulation validation.
 
-### Copilot prompt
-Reconstructed from the documented development task: “Build the testing and quality strategy for RiskPulse AI, including deterministic domain tests, API validation, frontend scenario checks, and build verification.”
+### 2. Prerequisites
+- Stages 5–8 must be built and working.
+- The actual application logic, API contract, and frontend behavior must already exist.
 
-### What Copilot was asked to do
-- add shared tests for risk, pricing, leakage, decision, and AI brief behavior
-- add backend API tests
-- add frontend tests for INR and scenario logic
-- document the testing strategy and validation flow
+### 3. Copilot Prompt
+Reconstructed from the documented development task: “Inspect the repository and implement the testing and quality strategy for RiskPulse AI. Add domain tests for risk, pricing, leakage, decision support, and AI brief generation. Add backend API validation for policy and underwriting endpoints. Add frontend tests for INR formatting and scenario simulation. Keep tests deterministic and repository-aware. Before editing files, review the current test setup and the repository instructions. Do not invent production dependencies or mock-only assertions. Do not modify unrelated files.”
 
-### Result/output
-The testing strategy is documented in [docs/testing-quality.md](docs/testing-quality.md), with actual tests in the shared package, frontend, and backend. The validation commands are represented in the repo root scripts in [package.json](package.json).
+### 4. Expected Outcome
+- Shared package tests pass for the deterministic underwriting logic.
+- Backend tests cover the API flow and error handling.
+- Frontend tests validate the scenario logic and INR formatting.
+- The repository continues to pass the required build/test commands.
 
-### Validation performed
-- executed the repo build and test commands
-- confirmed the suite passes across all workspaces
+### 5. Validation
+- Check the actual test files in the shared, backend, and frontend workspaces.
+- Run the root validation command: `npm run build && npm test`
 
 ---
 
 ## Stage 10 — Demo
 
-### Goal
-Create a realistic and repo-accurate demonstration flow for the capstone presentation.
+### 1. Goal
+Prepare a concise, repo-accurate demonstration that tells the underwriting story without inventing unsupported outcomes or claims.
 
-### Copilot prompt
-Reconstructed from the documented development task: “Create the final demo guide for RiskPulse AI, aligned with the actual UI and deterministic logic, and suitable for a concise business/technical presentation.”
+### 2. Prerequisites
+- Stages 1–9 must be complete and validated.
+- The dashboard, policy detail workspace, AI Underwriter Brief, and What-If Simulator must already exist.
+- The demo should use the project’s actual synthetic data outputs and examples.
 
-### What Copilot was asked to do
-- define a clear demo story from business problem to scenario analysis
-- match the sequence to the actual screens and data in the app
-- explain the dashboard, drill-down, AI brief, and simulator behavior
-- include backup flow for runtime issues
+### 3. Copilot Prompt
+Reconstructed from the documented development task: “Inspect the existing repository and create a demo guide for RiskPulse AI based on the actual implemented behavior. Use the repository’s real screens, risk engine output, pricing and leakage logic, and synthetic policy set as the source of truth. Tell a clear business story: underwriting challenge, risk and pricing pressure, review flow, AI Underwriter Brief, and What-If scenario change. Emphasize that the final decision remains with the human underwriter. Before editing files, review the current docs and app flow. Do not invent metrics, customer outcomes, AI capabilities, or production deployment claims. Do not modify unrelated files.”
 
-### Result/output
-The demo guide is in [docs/demo-guide.md](docs/demo-guide.md). It matches the actual app flow and uses the real synthetic-record patterns and logic.
+### 4. Expected Outcome
+- A demo guide in [docs/demo-guide.md](docs/demo-guide.md) that matches the actual app flow and existing synthetic outputs.
+- Clear business storytelling with actual screen-to-screen flow and evidence-backed examples.
+- A realistic 5–7 minute demo narrative grounded in the repo.
 
-### Validation performed
-- checked the demo flow against actual implemented screens and service outputs
-- ensured it did not invent unsupported metrics or production claims
+### 5. Validation
+- Check the demo guide against the implemented UI and backend outputs.
+- Validate that it references actual examples and does not invent unsupported numbers or claims.
+- Run: `npm run build && npm test`
 
 ---
 
 ## Stage 11 — 5 Slides
 
-### Goal
-Prepare a concise 5-slide presentation based only on the implemented repo and actual project docs.
+### 1. Goal
+Prepare a concise five-slide presentation based only on the repo’s actual architecture, outputs, and accepted project constraints.
 
-### Copilot prompt
-Reconstructed from the documented development task: “Prepare exactly five slides for the RiskPulse AI capstone, using only actual repository content and enterprise presentation language.”
+### 2. Prerequisites
+- Stage 10 demo material must be complete and aligned with the repo.
+- The project must already have documented architecture, backend, AI Underwriter, and testing content.
 
-### What Copilot was asked to do
-- summarize the business problem
-- define the architecture and solution
-- explain risk, pricing, leakage, and decision logic
-- explain the AI Underwriter and simulator
-- address business value, Copilot usage, limitations, and future improvement areas
+### 3. Copilot Prompt
+Reconstructed from the documented development task: “Inspect the repository and write exactly five presentation slides for RiskPulse AI based only on the actual implementation and documentation. Keep the slide content concise and professional for a 5–7 minute technical/business capstone presentation. Cover: business problem, architecture and solution, risk/pricing/leakage intelligence, AI Underwriter and simulator, and business value plus Copilot and future limitations. Use only repository-supported facts. Before editing files, read the existing docs and implementation. Do not invent customers, ROI, accuracy figures, production deployment claims, or unsupported future claims. Do not modify unrelated files.”
 
-### Result/output
-The slide content is in [docs/presentation-5-slides.md](docs/presentation-5-slides.md). It is aligned to the real repository and stays within the project’s deterministic, synthetic, human-led design.
+### 4. Expected Outcome
+- A 5-slide deck in [docs/presentation-5-slides.md](docs/presentation-5-slides.md) grounded in the repo’s implemented architecture and constraints.
+- Business, technical, and process framing remain consistent with the actual decision-support product.
 
-### Validation performed
-- checked slide bullets against actual docs and implementation
-- removed speculative or marketing-heavy claims
-
----
-
-## Stage 12 — Final Submission
-
-### Goal
-Complete the final readiness review and ensure the repository is consistent, validated, and presentation-ready.
-
-### Copilot prompt
-Reconstructed from the documented development task: “Audit the repository against all 12 capstone stages, check consistency across docs and implementation, and ensure the submission is valid and ready.”
-
-### What Copilot was asked to do
-- review README completeness and doc consistency
-- validate architecture, backend, frontend, risk engine, AI underwriter, tests, and demo materials
-- check synthetic-data-only constraints and absence of secrets
-- confirm the repo is ready for final submission without speculating on additional features
-
-### Result/output
-The repository was reviewed against all 12 stages, and the final submission readiness report is consistent with the actual implementation. The docs and project structure align with the real repo state.
-
-### Validation performed
-- reviewed docs, configuration files, and app behavior together
-- checked build and test status using the repo’s actual commands
+### 5. Validation
+- Check every bullet against the repository’s actual implementation and docs.
+- Ensure the final deck does not include speculative or unsupported claims.
+- Run: `npm run build && npm test`
 
 ---
 
-## Summary
+## Stage 12 — Final Submission Audit
 
-The project was developed with an incremental prompting pattern: first scaffold, then data and risk logic, then backend, then frontend, then AI brief and simulation, then tests and documentation, and finally the demo and presentation assets. Copilot was used as a focused engineering assistant under repository-level instructions and human review, not as an autonomous decision-maker or source of unsupported claims.
+### 1. Goal
+Perform a final audit of the repository as a capstone submission, verify consistency across docs and implementation, and confirm the repo is ready without adding new features.
+
+### 2. Prerequisites
+- All prior stages 1–11 must be complete and validated.
+- The repo should be internally consistent across documentation, architecture, backend, UI, and tests.
+
+### 3. Copilot Prompt
+Reconstructed from the documented development task: “Inspect the repository and perform a final submission audit for the RiskPulse AI Capstone. Review the README, architecture docs, backend docs, risk/pricing doc, frontend docs, AI Underwriter doc, testing doc, demo guide, slide deck, Copilot docs, repo setup, project structure, build scripts, test scripts, and synthetic-data requirements. Confirm that the repository is consistent with the implemented code and that no new feature work is required. Do not add feature work or speculative improvements. Before changing any files, inspect the current repo and compare it with the actual implementation. Do not modify unrelated files.”
+
+### 4. Expected Outcome
+- A final repository review confirming the project is submission-ready.
+- Evidence that the docs match the implementation and that the repo remains synthetic-data-only.
+- No new feature changes required for final submission.
+
+### 5. Validation
+- Review the repo for documentation consistency and implementation alignment.
+- Confirm there are no secrets or external production integrations.
+- Check build and test run remains green.
+- Run: `npm run build && npm test`
+
+---
+
+## Final reminder for all stages
+
+Across all stages, Copilot should be used incrementally and repository-aware:
+
+- inspect the existing repository before making changes
+- rely on the rules in [.github/copilot-instructions.md](.github/copilot-instructions.md)
+- preserve the synthetic-data-only requirement
+- preserve the human-in-the-loop underwriting model
+- preserve the deterministic Risk → Pricing → Leakage → Decision architecture
+- use the same repository and validation commands across the workflow
+- do not invent functionality, metrics, customers, or production systems
+- review each generated change before accepting it
+- validate with build/test commands at the end of each stage
+
+This prompt log is meant to be reusable and reproducible for future project work, but it is not a claim that the exact historical prompts were preserved verbatim unless the repository contains that wording.
